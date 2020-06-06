@@ -1,25 +1,21 @@
 import warnings
 warnings.filterwarnings('ignore')
-import tensorflow as tf
 import numpy as np
 
+import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
-
 
 mnist = input_data.read_data_sets("./Dataset/", one_hot=True)
 
-filenames = ['feature.txt']
 num_classes = 10
 batch_size = 20
 num_epochs = 100
-num_buckets = 10000
 # num_parallel_calls = tf.data.experimental.AUTOTUNE
 num_parallel_calls = 1
 max_epochs = 2000
 max_num_batches = 1000
 learning_rate = 0.1
 emb_dim = 784
-prefetch_buffer_size = 10
 
 class LR(object):
     def __init__(self, emb_dim, num_classes=1, use_bias=True):
@@ -42,32 +38,6 @@ class LR(object):
     def __call__(self, x):
         x = tf.add(tf.matmul(x, self.W), self.b)
         return x
-
-def build_dataset(filenames):
-    def _parse_data(line):
-        line = tf.strings.split(line, '|', 1).values
-        line = tf.reshape(line, (-1, 2))
-        label, features = line[:, 0], line[:, 1]
-        label = tf.strings.split(label, ' ').values
-        label = tf.reshape(label, (-1, 2))[:, 0]
-        label = tf.string_to_number(label, out_type=tf.float32)
-        label = tf.where(label<=0, \
-                         tf.zeros_like(label, dtype=tf.float32), \
-                         tf.ones_like(label, dtype=tf.float32))
-        features = tf.strings.split(features, '|')
-        res = {'label': label, 'features': features}
-        return res
-
-    dataset = tf.data.Dataset.from_tensor_slices(filenames)
-    dataset = dataset.interleave(tf.data.TextLineDataset, cycle_length=1)
-    dataset = dataset.batch(batch_size) \
-                    .map(_parse_data, num_parallel_calls=num_parallel_calls) \
-                    .repeat(num_epochs) \
-                    .prefetch(prefetch_buffer_size)
-    iterator = dataset.make_one_shot_iterator()
-    next_element = iterator.get_next()
-    return next_element
-
 
 tf.set_random_seed(123)
 global_step = tf.get_variable(
