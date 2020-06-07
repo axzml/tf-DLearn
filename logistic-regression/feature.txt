@@ -1,0 +1,4 @@
+1 a|name:Tom|age:26|weight:123
+-1 b|name:Mary|age:30|weight:10
+-1 c|name:Mike|age:15
+1 d|name:John|weight:110
