@@ -109,8 +109,8 @@ with tf.Session() as sess:
         for epoch in range(max_epochs):
             losses = []
             for _ in range(max_num_batches):
-                loss, _, p, l, g = sess.run([cost, train_op, pred, label, global_step])
-                print('Loss: {}, pred: {}, label: {}, global_step: {}'.format(loss, p, l, g))
+                loss, _, p1, l1, g = sess.run([cost, train_op, pred, label, global_step])
+                print('Loss: {}, pred: {}, label: {}, global_step: {}'.format(loss, p1, l1, g))
                 count += 1
                 # if count > 20:
                     # break
