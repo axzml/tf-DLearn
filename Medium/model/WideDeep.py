@@ -26,7 +26,7 @@ class WideDeep(Model):
                  ):
         super(WideDeep, self).__init__()
         self.random_seed = random_seed
-        self.feature_size = feature_size  # denote as M, size of the feature dictionary
+        self.feature_size = feature_size  # denote as n, size of the feature dictionary
         self.field_size = field_size  # denote as F, size of the feature fields
         self.hidden_units = hidden_units
         self.use_bn = use_bn
@@ -120,7 +120,7 @@ class WideDeep(Model):
         weights = {}
         with tf.variable_scope("embeddings"):
             weights['embeddings_dict'] = tf.get_variable("embeddings_dict",
-                                                       [self.feature_size, self.embedding_size],  # M * K
+                                                       [self.feature_size, self.embedding_size],  # n * K
                                                        initializer=tf.random_normal_initializer(0.0, 0.1),
                                                        dtype=tf.float32)
 

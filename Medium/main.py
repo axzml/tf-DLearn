@@ -10,6 +10,7 @@ import tensorflow as tf
 
 from model.LR import LR
 from model.WideDeep import WideDeep
+from model.FM import FM
 
 def train(model, train_iterator,
           max_epochs=1, max_num_batches=3,
@@ -77,7 +78,7 @@ def main():
     random_seed = 1234
     learning_rate = 0.01
     max_to_keep = 4
-    model_name = 'WideDeep'
+    model_name = 'FM'
     ## params for WideDeep
     hidden_units = [128, 64]
     use_bn = True
@@ -104,7 +105,13 @@ def main():
     if model_name == 'LR':
         model = LR(feature_size, field_size,
                    output_size=output_size,
+                   random_seed=random_seed,
+                   learning_rate=learning_rate,
+                   max_to_keep=max_to_keep)
+    elif model_name == 'FM':
+        model = FM(feature_size, field_size,
                    embedding_size=embedding_size,
+                   output_size=output_size,
                    random_seed=random_seed,
                    learning_rate=learning_rate,
                    max_to_keep=max_to_keep)
