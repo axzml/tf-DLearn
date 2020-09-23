@@ -36,24 +36,6 @@ class MyEstimator(tf.estimator.Estimator):
             with tf.variable_scope('ctr_model'):
                 logits = build_dnn_model(features, mode, params)
             pred= tf.sigmoid(logits, name="CTR")
-            labels = tf.reshape(labels, (-1, 1))
-            loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=labels,
-                                                                          logits=logits),
-                                                                          name="loss")
-            optimizer = tf.train.AdamOptimizer(learning_rate=params['learning_rate'],
-                                            beta1=0.9, beta2=0.999, epsilon=1e-8)
-            train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
-
-            auc = tf.metrics.auc(labels=labels, predictions=pred)
-            metrics = {'auc': auc}
-            tf.summary.scalar('auc', auc[1]) ## tf.metrics.auc 返回 (auc, update_op), 后者常用于测试集
-            tf.summary.scalar('loss', loss)
-
-            summary_hook = tf.train.SummarySaverHook(
-                save_steps=1,
-                output_dir=params['model_dir'],
-                summary_op=tf.summary.merge_all(),
-            )
 
             predictions = {
               'ctr_probabilities': pred,
@@ -68,6 +50,23 @@ class MyEstimator(tf.estimator.Estimator):
                                                 predictions=predictions,
                                                 export_outputs=export_outputs)
 
+            labels = tf.reshape(labels, (-1, 1))
+            loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=labels,
+                                                                          logits=logits),
+                                                                          name="loss")
+            labels = tf.Print(labels, [tf.shape(labels)], message='>>> labels: ', summarize=10)
+
+            auc = tf.metrics.auc(labels=labels, predictions=pred)
+            metrics = {'auc': auc}
+            tf.summary.scalar('auc', auc[1]) ## tf.metrics.auc 返回 (auc, update_op), 后者常用于测试集
+            tf.summary.scalar('loss', loss)
+
+            summary_hook = tf.train.SummarySaverHook(
+                save_steps=1,
+                output_dir=params['model_dir'],
+                summary_op=tf.summary.merge_all(),
+            )
+
 
             ## Evaluation
             if mode == tf.estimator.ModeKeys.EVAL:
@@ -77,6 +76,9 @@ class MyEstimator(tf.estimator.Estimator):
                             loss=loss,
                             )
 
+            optimizer = tf.train.AdamOptimizer(learning_rate=params['learning_rate'],
+                                            beta1=0.9, beta2=0.999, epsilon=1e-8)
+            train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
             ## 最后是 Train
             return tf.estimator.EstimatorSpec(
                             mode=mode,
@@ -125,4 +127,19 @@ train_spec = tf.estimator.TrainSpec(
     max_steps=1000,
 )
 eval_spec = tf.estimator.EvalSpec(input_fn=lambda: input_fn(train_files, batch_size), throttle_secs=10, steps=None)
-tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
+# tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
+estimator.train(
+    input_fn=lambda: input_fn(train_files, batch_size),
+    max_steps=1000,
+)
+estimator.evaluate(
+    input_fn=lambda: input_fn(train_files, batch_size),
+    steps=None,
+)
+feature_spec = {
+    "feat_ids": tf.placeholder(shape=[None, 1], dtype=tf.int32, name="feat_ids"),
+}
+
+export_dir = './pb_model'
+serving_input_receiver_fn = tf.estimator.export.build_raw_serving_input_receiver_fn(feature_spec)
+estimator.export_savedmodel(export_dir, serving_input_receiver_fn)

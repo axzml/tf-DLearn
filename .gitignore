@@ -21,3 +21,6 @@ summary/
 **/.idea/*
 */.idea/*
 .idea/
+.python-version
+*/.python-version
+**/.python-version
